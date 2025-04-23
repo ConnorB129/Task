@@ -42,6 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
+
+        // Add option to unregister dropdown
+        const unregisterOption = document.createElement("option");
+        unregisterOption.value = name;
+        unregisterOption.textContent = name;
+        document.getElementById("unregister-activity").appendChild(unregisterOption);
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
@@ -86,6 +92,67 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Handle unregister form submission
+  const unregisterForm = document.createElement("form");
+  unregisterForm.id = "unregister-form";
+  unregisterForm.innerHTML = `
+    <div class="form-group">
+      <label for="unregister-email">Student Email:</label>
+      <input type="email" id="unregister-email" required placeholder="your-email@mergington.edu" />
+    </div>
+    <div class="form-group">
+      <label for="unregister-activity">Select Activity:</label>
+      <select id="unregister-activity" required>
+        <option value="">-- Select an activity --</option>
+        <!-- Activity options will be loaded here -->
+      </select>
+    </div>
+    <button type="submit">Unregister</button>
+  `;
+  document.getElementById("unregister-container").appendChild(unregisterForm);
+
+  unregisterForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById("unregister-email").value;
+    const activity = document.getElementById("unregister-activity").value;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
+        unregisterForm.reset();
+      } else {
+        messageDiv.textContent = result.detail || "An error occurred";
+        messageDiv.className = "error";
+      }
+
+      messageDiv.classList.remove("hidden");
+
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
+
+      // Refresh activities list
+      fetchActivities();
+    } catch (error) {
+      messageDiv.textContent = "Failed to unregister. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      console.error("Error unregistering:", error);
     }
   });
 
